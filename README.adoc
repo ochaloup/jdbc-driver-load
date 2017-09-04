@@ -30,4 +30,6 @@ java -cp classes jdbcLoad
   `java -cp classes/ -DjdbcUrl=jdbc:postgresql://postgres-94.hosts.mwqe.eng.bos.redhat.com:5432/crashrec -Ddriver=$PWD/lib/postgresql-9.4-1201.jdbc41.jar jdbcLoad`
 * Connect to DB2
   `java -cp classes/ -DjdbcUrl=jdbc:db2://db2-105.hosts.mwqe.eng.bos.redhat.com:50000/dballo -Ddriver=$PWD/lib/db2jcc4.jar jdbcLoad`
+* Connect to Sybase
+  `java -cp classes/ -DjdbcUrl=jdbc:sybase:Tds:sybase-160.hosts.mwqe.eng.bos.redhat.com:5000/crashrec -Ddriver=$PWD/lib/jconn4.jar jdbcLoad`
 
