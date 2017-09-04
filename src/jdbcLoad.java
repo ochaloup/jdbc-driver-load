@@ -14,12 +14,11 @@ public class jdbcLoad {
   private static String password = System.getProperty("password", "crashrec");
   private static String jdbcUrl = System.getProperty("jdbcUrl");
   private static String driver = System.getProperty("driver", "lib/postgresql-9.4-1201.jdbc41.jar");
+  private static String psqlConnectionPattern = "jdbc:postgresql://%s:%s/%s";
 
   public static void main(String[] args) throws Exception {
     String connectionUrl = jdbcUrl;
-    if(jdbcUrl == null) {
-      connectionUrl = String.format("jdbc:postgresql://%s:%s/%s", serverName, portNumber, databaseName);
-    }
+    if (jdbcUrl == null) connectionUrl = String.format(psqlConnectionPattern, serverName, portNumber, databaseName);
     System.out.println("Going to connect with following connection url: " + connectionUrl);
 
     File driverFile = FileLoader.getFile(driver);
@@ -28,34 +27,40 @@ public class jdbcLoad {
     String driverClassName = null;
 
     //get the zip file content
-    ZipInputStream zipInputStream = new ZipInputStream(new FileInputStream(driverFile));
-    //get the zipped file list entry
-    ZipEntry zipEntry = zipInputStream.getNextEntry();
-    while(zipEntry!=null){
-       if(zipEntry.getName().equals("META-INF/services/java.sql.Driver")) {
-         String[] driverClassNames = slurp(zipInputStream).split("\\n");
-         driverClassName = driverClassNames[0];
-         System.out.println(zipEntry.getName() + ":" + driverClassName);
-
-       }
-       // System.out.println("Other: " + zipEntry.getName());
-       zipEntry = zipInputStream.getNextEntry();
+    try (ZipInputStream zipInputStream = new ZipInputStream(new FileInputStream(driverFile))) {
+      //get the zipped file list entry
+      ZipEntry zipEntry = zipInputStream.getNextEntry();
+      while(zipEntry!=null){
+        if(zipEntry.getName().equals("META-INF/services/java.sql.Driver")) {
+          String[] driverClassNames = slurp(zipInputStream).split("\\n");
+          driverClassName = driverClassNames[0];
+           System.out.println(zipEntry.getName() + ":" + driverClassName);
+           break;
+         }
+         // System.out.println("Other: " + zipEntry.getName());
+         zipEntry = zipInputStream.getNextEntry();
+      }
     }
-    zipInputStream.closeEntry();
-    zipInputStream.close();
 
     ClassLoader driverClassLoader = FileLoader.loadJar(driverFile.getAbsolutePath());
-    // Class.forName(driverClassName, true, driverClassLoader);
+
+    // trouble with class loading - see http://www.kfu.com/~nsayer/Java/dyn-jdbc.html
+    //Driver driverInstance = (Driver) Class.forName(driverClassName, true, driverClassLoader).newInstance();
+    // -- OR --
     @SuppressWarnings("unchecked")
     Class<Driver> driverClazz = (Class<Driver>) driverClassLoader.loadClass(driverClassName);
-    // trouble with class loading - see http://www.kfu.com/~nsayer/Java/dyn-jdbc.html
-     DriverDelegation driverDelegation = new DriverDelegation(driverClazz.newInstance());
-     DriverManager.registerDriver(driverDelegation);
+    Driver driverInstance = driverClazz.newInstance();
+    // -- OR --
+    // No dynamic class loading :/
+    // Driver driverInstance = (Driver) Class.forName(driverClassName).newInstance();
 
-     Connection conn = DriverManager.getConnection(connectionUrl, user, password);
-     DatabaseMetaData md = conn.getMetaData();
-     System.out.println(String.printf("driver name: %s, major version: %s, minor version: %s",
-      md.getDriverName(), md.getDatabaseMajorVersion(), md.getDatabaseMinorVersion()));
+    DriverDelegation driverDelegation = new DriverDelegation(driverInstance);
+    DriverManager.registerDriver(driverDelegation);
+
+    Connection conn = DriverManager.getConnection(connectionUrl, user, password);
+    DatabaseMetaData md = conn.getMetaData();
+    System.out.printf("driver name: '%s', major version: '%s', minor version: '%s'%n",
+      md.getDriverName(), md.getDatabaseMajorVersion(), md.getDatabaseMinorVersion());
   }
 
   public static String slurp(final InputStream is) {

@@ -1,13 +1,33 @@
+== Loading JDBC driver
 
-Compilation:
+Simple a test example how to load driver by DriverManager on the fly in Java.
+
+=== HOWTO
+
+==== Compilation
+
+```
 javac -cp . -d classes src/*java
+```
 
-Running:
+==== Running
+
+```
 java -cp classes jdbcLoad
+```
 
-One line hack:
+==== One line hack
+
+```
  rm -rf classes/* && javac -cp . -d classes src/*java && java -cp classes/ jdbcLoad
+```
 
-Connect to MySQL :)
-java -cp classes/ -DjdbcUrl=jdbc:mysql://db19.mw.lab.eng.bos.redhat.com:3306/crashrec -Ddriver=/home/ochaloup/conn/mysql-connector-java-5.1.35-bin.jar jdbcLoad
+==== Examples
+
+* Connect to MySQL
+  `java -cp classes/ -DjdbcUrl=jdbc:mysql://db19.mw.lab.eng.bos.redhat.com:3306/crashrec -Ddriver=$PWD/lib/mysql-connector-java-5.1.36-bin.jar jdbcLoad`
+* Connect to PostgreSQL
+  `java -cp classes/ -DjdbcUrl=jdbc:postgresql://postgres-94.hosts.mwqe.eng.bos.redhat.com:5432/crashrec -Ddriver=$PWD/lib/postgresql-9.4-1201.jdbc41.jar jdbcLoad`
+* Connect to DB2
+  `java -cp classes/ -DjdbcUrl=jdbc:db2://db2-105.hosts.mwqe.eng.bos.redhat.com:50000/crashrec -Ddriver=$PWD/lib/db2jcc4.jar jdbcLoad`
 
