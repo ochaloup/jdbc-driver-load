@@ -33,12 +33,12 @@ public class jdbcLoad {
       while(zipEntry!=null){
         if(zipEntry.getName().equals("META-INF/services/java.sql.Driver")) {
           String[] driverClassNames = slurp(zipInputStream).split("\\n");
-          driverClassName = driverClassNames[0];
-           System.out.println(zipEntry.getName() + ":" + driverClassName);
-           break;
-         }
-         // System.out.println("Other: " + zipEntry.getName());
-         zipEntry = zipInputStream.getNextEntry();
+          driverClassName = driverClassNames[0].trim().replaceAll("[\r\n]+$", "");;
+          System.out.println(zipEntry.getName() + ":" + driverClassName);
+          break;
+        }
+        // System.out.println("Other: " + zipEntry.getName());
+        zipEntry = zipInputStream.getNextEntry();
       }
     }
 
